@@ -41,6 +41,8 @@ const getSelectValuePart = <Subject>(scope: Cypress.Chainable<Subject>, options?
   scope.find('.ant-select-selector', options)
 const getSelectSearchPart = <Subject>(scope: Cypress.Chainable<Subject>, options?: CommonOptions) =>
   scope.find('.ant-select-selection-search-input', options)
+const getFormFieldError = <Subject>(scope: Cypress.Chainable<Subject>, options?: CommonOptions) =>
+    scope.find('.ant-form-item-control .ant-form-item-explain', options)
 
 type FormFieldOptions = { label?: string }
 
@@ -59,9 +61,11 @@ export function getFormField({ label, ...options }: FormFieldOptions & CommonOpt
 }
 
 type FormInputOptions = FormFieldOptions & { type?: FieldType }
-export function getFormInput({ label, type = FIELD_TYPE.INPUT, ...options }: FormInputOptions & CommonOptions = {}) {
-  const opts = logAndMute('getFormInput', [label, type].filter(Boolean).join(', '), options)
-  const scope = label ? getFormField({ label, ...opts }) : cy.root()
+type OptionsType = FormInputOptions & CommonOptions
+
+type FormInputFromScopeOptions = { type: string, scope: Cypress.Chainable<JQuery<HTMLElement>>, opts?: OptionsType}
+
+export function getFormInputFromScope({ type, scope, opts }: FormInputFromScopeOptions) {
   switch (type) {
     case INPUT:
       return scope.find('.ant-input', opts)
@@ -78,6 +82,31 @@ export function getFormInput({ label, type = FIELD_TYPE.INPUT, ...options }: For
     default:
       throw unsupportedFieldType(type)
   }
+}
+
+export function getFormInput({ label, type = FIELD_TYPE.INPUT, ...options }: FormInputOptions & CommonOptions = {}) {
+  const opts = logAndMute('getFormInput', [label, type].filter(Boolean).join(', '), options)
+  const scope = label ? getFormField({ label, ...opts }) : cy.root()
+  return getFormInputFromScope({ type, scope, opts })
+}
+
+const getNumberInput = ($el: JQuery, options?: OptionsType) => getFormInputFromScope({ type: NUMBER_INPUT, scope: on($el), opts: options })
+const getSelect = ($el: JQuery, options?: OptionsType) => getFormInputFromScope({ type: SELECT, scope: on($el), opts: options })
+
+export function extractNumberInput(options?: OptionsType) {
+  return ($el: JQuery) => getNumberInput($el, options)
+}
+
+export function extractSelect(options?: OptionsType) {
+  return ($el: JQuery) => getSelect($el, options)
+}
+
+export function extractSelectSearchPart(options?: OptionsType) {
+  return ($el: JQuery) => getSelectSearchPart(on($el), options)
+}
+
+export function extractFormFieldError(options?: OptionsType) {
+  return ($el: JQuery) => getFormFieldError(on($el), options)
 }
 
 // endregion
@@ -182,7 +211,7 @@ export function expectFormFieldError({
   ...options
 }: { error?: string } & FormFieldOptions & CommonOptions) {
   const opts = logAndMute('expectFieldError', `${label}: ${expectedHint}`, options)
-  const field = getFormField({ label, ...opts }).find('.ant-form-item-control .ant-form-item-explain', opts)
+  const field = getFormFieldError(getFormField({ label, ...opts }), opts)
   return expectedHint ? field.should('have.text', expectedHint) : field.should('not.exist')
 }
 
@@ -262,9 +291,21 @@ export function chooseSelectDropdownOption(value: Label, options?: CommonOptions
 
 export const setInputValue =
   (value: string, { append, ...options }: { append?: boolean } & CommonOptions = {}) =>
+    ($el: JQuery) => {
+      if (value) {
+        return on($el).type(append ? value : `{selectall}${value}`, options)
+      }
+
+      return on($el).clear(options)
+    }
+
+export const setNumberInputValue = (value?: string, options: CommonOptions = {}) =>
   ($el: JQuery) => {
-    if (value) on($el).type(append ? value : `{selectall}${value}`, options)
-    else on($el).clear(options)
+    if (value) {
+      return getNumberInput($el, options).type(value, options)
+    }
+
+    return getNumberInput($el, options).clear(options)
   }
 
 export const setSelectValue =

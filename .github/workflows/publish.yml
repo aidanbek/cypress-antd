@@ -19,6 +19,6 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{secrets.npm_token}}
       - run: npm run build
-      - run: npm run publish
+      - run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{secrets.npm_token}}

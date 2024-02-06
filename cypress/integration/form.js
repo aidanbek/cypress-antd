@@ -6,22 +6,27 @@ import moment from 'moment'
 import { render } from '../commands'
 import {
   FIELD_TYPE,
+  clearMultiselect,
+  expectFormFieldError,
+  expectFormFieldValue,
+  expectFormFields,
+  expectSelectOptions,
+  expectSelectPlaceholder,
+  expectSelectValue,
+  extractFormFieldError,
+  extractNumberInput,
+  extractSelect,
+  extractSelectSearchPart,
   getFormField,
   getFormInput,
-  expectFormFieldValue,
-  expectSelectOptions,
-  expectSelectValue,
-  expectSelectPlaceholder,
-  expectFormFieldError,
-  expectFormFields,
-  setInputValue,
-  setSelectValue,
-  setMultiselectValue,
-  clearMultiselect,
+  setDatePickerValue,
   setFormFieldValue,
   setFormFieldValues,
-  setTagsValue,
-  setDatePickerValue
+  setInputValue,
+  setMultiselectValue,
+  setNumberInputValue,
+  setSelectValue,
+  setTagsValue
 } from '../../src/form'
 
 const musicalGenres = [
@@ -84,7 +89,7 @@ const renderForm = () =>
       <Form.Item label="Genre">
         <Select mode="multiple" defaultValue={['rock', 'metal']}>
           {musicalGenres.map(key => (
-            <Select.Option key={key}>{upperFirst(key)}</Select.Option>
+              <Select.Option key={key}>{upperFirst(key)}</Select.Option>
           ))}
         </Select>
       </Form.Item>
@@ -95,7 +100,7 @@ const renderForm = () =>
           <Radio value="other">Other</Radio>
         </Radio.Group>
       </Form.Item>
-      <Form.Item label="Duration">
+      <Form.Item label="Duration" data-cy="duration">
         <InputNumber defaultValue={60} />
       </Form.Item>
       <Form.Item label="Restriction">
@@ -106,9 +111,9 @@ const renderForm = () =>
         </Radio.Group>
       </Form.Item>
       <Form.Item label="Scale">
-        <Select defaultValue="other" allowClear virtual={false}>
+        <Select defaultValue="other" showSearch allowClear virtual={false}>
           {musicalScales.map(key => (
-            <Select.Option key={key}>{upperFirst(key)}</Select.Option>
+              <Select.Option key={key}>{upperFirst(key)}</Select.Option>
           ))}
         </Select>
       </Form.Item>
@@ -226,6 +231,30 @@ describe('assertions', () => {
 
     it('expects a select-box to have no value', () => {
       getFormField(mood).then(expectSelectValue(''))
+    })
+  })
+
+  describe('extractFormFieldError', () => {
+    it('extracts form field error', () => {
+      getFormField(trackNumber).then(extractFormFieldError()).should('have.text', defaultErrors.trackNumber)
+    })
+  })
+
+  describe('extractNumberInput', () => {
+    it('extracts number input', () => {
+      getFormField(duration).then(extractNumberInput()).should('have.value', defaultValues.duration)
+    })
+  })
+
+  describe('extractSelect', () => {
+    it('extracts select', () => {
+      getFormField(scale).then(extractSelect()).then(expectSelectValue(defaultValues.scale))
+    })
+  })
+
+  describe('extractSelectSearchPart', () => {
+    it('', () => {
+      getFormField(tags).then(extractSelectSearchPart()).should('exist')
     })
   })
 
@@ -353,6 +382,19 @@ describe('interactions', () => {
     it('selects additional values in multiple selection select-box', () => {
       getFormField(genre).then(setMultiselectValue(['Classical'], { append: true }))
       expectFormFieldValue({ ...genre, value: ['Rock', 'Metal', 'Classical'] })
+    })
+  })
+
+  describe('setNumberInputValue', () => {
+    it('sets number input value', () => {
+      getFormField(duration).then(setNumberInputValue())
+      getFormField(duration).then(setNumberInputValue(100))
+      getFormInput(duration).should('have.value', 100)
+    })
+
+    it('clear number input value', () => {
+      getFormField(duration).then(setNumberInputValue())
+      getFormInput(duration).should('have.value', '')
     })
   })
 

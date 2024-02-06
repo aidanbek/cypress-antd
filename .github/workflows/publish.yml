@@ -18,7 +18,7 @@ jobs:
       - run: npm i --frozen-lockfile
         env:
           NODE_AUTH_TOKEN: ${{secrets.npm_token}}
-      - run: npm build
-      - run: npm publish
+      - run: npm run build
+      - run: npm run publish
         env:
           NODE_AUTH_TOKEN: ${{secrets.npm_token}}

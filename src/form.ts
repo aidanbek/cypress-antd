@@ -126,7 +126,7 @@ export const expectSelectOptions =
     absoluteRoot(opts)
       .find(`${selectDropdownSelector} .ant-select-item-option`, opts)
       .should($opts => expect($opts.toArray().map(el => el.innerText)).to.deep.equal(expectedOptions))
-    getSelectValuePart(on($el), opts).click(opts)
+    getSelectDropdown(opts).type('{esc}')
     tickIfOnClock(opts)
     expectSelectDropdownToClose(opts)
   }
